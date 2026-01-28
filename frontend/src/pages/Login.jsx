@@ -1,80 +1,60 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
-import { loginUser } from "../services/authService";
-import { AuthContext } from "../context/AuthContext";
+import { loginUser } from "../services/authService"; // your existing login service
 
-export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+const Login = () => {
   const navigate = useNavigate();
-  const { setToken, setUser } = useContext(AuthContext);
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage("");
+  const handleLogin = async () => {
     setLoading(true);
-
+    setError("");
     try {
-      const data = await loginUser(form);
-      setToken(data.token);
-      setUser({ _id: data._id, name: data.name, email: data.email });
+      const response = await loginUser(form); // POST request to backend
+      console.log("Login Response:", response);
+
+      // Store JWT token in localStorage
+      localStorage.setItem("token", response.token);
+
+      // Navigate to dashboard or homepage
       navigate("/dashboard");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong!");
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-8 max-w-md mx-auto bg-white rounded shadow space-y-4 mt-10"
-    >
-      <h1 className="text-2xl font-bold text-center mb-4">Login</h1>
-
+    <div style={{ maxWidth: "400px", margin: "auto" }}>
+      <h2>Login</h2>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <InputField
-        label="Email"
         name="email"
-        type="email"
+        placeholder="Email"
         value={form.email}
         onChange={handleChange}
-        placeholder="Enter your email"
-        required
       />
-
       <InputField
-        label="Password"
         name="password"
         type="password"
+        placeholder="Password"
         value={form.password}
         onChange={handleChange}
-        placeholder="Enter your password"
-        required
       />
-
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button onClick={handleLogin} disabled={loading}>
         {loading ? "Logging in..." : "Login"}
       </Button>
-
-      {message && <p className="text-red-500 text-center mt-2">{message}</p>}
-
-      <p className="text-center mt-2 text-sm">
-        Don't have an account?{" "}
-        <button
-          type="button"
-          className="text-blue-600 hover:underline"
-          onClick={() => navigate("/register")}
-        >
-          Register
-        </button>
-      </p>
-    </form>
+    </div>
   );
-}
+};
+
+export default Login;
