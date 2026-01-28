@@ -35,7 +35,7 @@ app.use(express.json());
 // CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "https://fullstack-authentication-page-3.onrender.com", // frontend dev server
+    origin: process.env.CLIENT_URL, // frontend dev server
     credentials: true,
   })
 );

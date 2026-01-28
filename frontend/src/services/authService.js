@@ -1,26 +1,27 @@
 // frontend/services/authService.js
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://fullstack-authentication-page-3.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) throw new Error("VITE_API_URL not defined");
 
 const api = axios.create({
-  baseURL: `${API_URL}/api/auth`,
+  baseURL: API_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach token automatically to protected requests
+// Attach token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Save auth data helper
+// Save auth data
 const saveAuthData = (data) => {
   if (data?.token) localStorage.setItem("token", data.token);
-
   if (data?._id) {
     localStorage.setItem(
       "user",
@@ -29,39 +30,23 @@ const saveAuthData = (data) => {
   }
 };
 
-// REGISTER → sends OTP (do NOT save token here)
 export const registerUser = async (form) => {
-  try {
-    const { data } = await api.post("/register", form);
-    return data;
-  } catch (err) {
-    throw err.response?.data || { message: err.message };
-  }
+  const { data } = await api.post("/api/auth/register", form);
+  return data;
 };
 
-// LOGIN → after verified
 export const loginUser = async (form) => {
-  try {
-    const { data } = await api.post("/login", form);
-    saveAuthData(data);
-    return data;
-  } catch (err) {
-    throw err.response?.data || { message: err.message };
-  }
+  const { data } = await api.post("/api/auth/login", form);
+  saveAuthData(data);
+  return data;
 };
 
-// VERIFY OTP → user becomes verified + gets token
 export const verifyOtp = async (form) => {
-  try {
-    const { data } = await api.post("/verify-otp", form);
-    saveAuthData(data);
-    return data;
-  } catch (err) {
-    throw err.response?.data || { message: err.message };
-  }
+  const { data } = await api.post("/api/auth/verify-otp", form);
+  saveAuthData(data);
+  return data;
 };
 
-// LOGOUT
 export const logoutUser = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
