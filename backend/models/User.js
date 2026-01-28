@@ -1,3 +1,4 @@
+// models/User.js
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -15,6 +16,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       index: true,
+      match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
     },
     password: {
       type: String,
@@ -32,12 +34,12 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   { timestamps: true }
 );
 
-/* ✅ FIXED: async hook WITHOUT next */
+/* ✅ Pre-save hook to hash password */
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
@@ -45,9 +47,17 @@ userSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Compare password
+// Compare entered password with hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
+};
+
+// Generate OTP and set expiry (5 minutes)
+userSchema.methods.generateOTP = function () {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+  this.otp = otp;
+  this.otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 min expiry
+  return otp;
 };
 
 // Remove sensitive fields when sending response

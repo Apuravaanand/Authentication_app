@@ -4,7 +4,7 @@ import axios from "axios";
 // Backend API URL (from .env or fallback)
 const API_URL = import.meta.env.VITE_API_URL || "https://fullstack-authentication-page.onrender.com";
 
-// Axios instance
+// Create Axios instance
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // only needed if backend uses cookies
@@ -13,7 +13,7 @@ const api = axios.create({
   },
 });
 
-// Attach token automatically to requests
+// Interceptor to attach token automatically
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -31,25 +31,30 @@ const saveAuthData = (data) => {
   }
 };
 
-// Auth service functions
-export const registerUser = async (form) => {
-  const { data } = await api.post("/api/auth/register", form);
-  return data;
-};
-
-export const loginUser = async (form) => {
-  const { data } = await api.post("/api/auth/login", form);
-  saveAuthData(data);
-  return data;
-};
-
-export const verifyOtp = async (form) => {
-  const { data } = await api.post("/api/auth/verify-otp", form);
-  saveAuthData(data);
-  return data;
-};
-
+// Remove auth data from localStorage
 export const logoutUser = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+};
+
+// ---------------- Auth API functions ----------------
+
+// Register user (sends OTP to email)
+export const registerUser = async (form) => {
+  const { data } = await api.post("/api/auth/register", form);
+  return data; // message only, no token yet
+};
+
+// Login user
+export const loginUser = async (form) => {
+  const { data } = await api.post("/api/auth/login", form);
+  saveAuthData(data);
+  return data; // returns user + token
+};
+
+// Verify OTP
+export const verifyOtp = async ({ email, otp }) => {
+  const { data } = await api.post("/api/auth/verify-otp", { email, otp });
+  saveAuthData(data); // save token + user after successful OTP
+  return data;
 };
