@@ -1,7 +1,7 @@
 // frontend/services/authService.js
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "https://fullstack-authentication-page.onrender.com" ;
 if (!API_URL) throw new Error("VITE_API_URL not defined");
 
 const api = axios.create({
