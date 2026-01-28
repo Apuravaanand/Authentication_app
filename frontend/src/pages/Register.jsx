@@ -9,15 +9,11 @@ export default function Register() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
-  // Update form fields
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -26,24 +22,13 @@ export default function Register() {
 
     try {
       const res = await registerUser(form);
-
-      // Show success message
       setMessage(res.message || "OTP sent to your email");
-
-      // Navigate to OTP verification page
       navigate("/verify-otp", { state: { email: form.email } });
     } catch (err) {
-      const errorMsg =
-        err.response?.data?.message || err.message || "Something went wrong!";
-      setMessage(errorMsg);
+      setMessage(
+        err.response?.data?.message || err.message || "Something went wrong!"
+      );
       setIsError(true);
-
-      // Redirect to login if user already exists
-      if (errorMsg.toLowerCase().includes("already exists")) {
-        setTimeout(() => navigate("/login"), 2500);
-      }
-
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -65,7 +50,6 @@ export default function Register() {
         required
         disabled={loading}
       />
-
       <InputField
         label="Email"
         name="email"
@@ -76,7 +60,6 @@ export default function Register() {
         required
         disabled={loading}
       />
-
       <InputField
         label="Password"
         name="password"
@@ -99,7 +82,7 @@ export default function Register() {
           onClick={() => navigate("/login")}
           disabled={loading}
         >
-          Already Member? Login
+          Already a member? Login
         </button>
       </p>
 

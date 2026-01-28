@@ -1,10 +1,11 @@
+// controllers/authController.js
 import User from "../models/User.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "../config/mailer.js";
 import generateToken from "../utils/generateToken.js";
 
-// REGISTER USER → Send OTP
+// ----------------- REGISTER -----------------
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -14,18 +15,17 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
+  // Hash password handled in model pre-save
+  const user = await User.create({ name, email, password, isVerified: false });
+
+  // Generate OTP and hash it
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpiry = Date.now() + 10 * 60 * 1000;
+  const hashedOtp = await bcrypt.hash(otp, 10);
+  user.otp = hashedOtp;
+  user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+  await user.save();
 
-  const user = await User.create({
-    name,
-    email,
-    password,
-    otp,
-    otpExpiry,
-    isVerified: false,
-  });
-
+  // Send OTP via email
   await sendEmail(
     email,
     "Your OTP for Auth App",
@@ -40,8 +40,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 });
 
-
-
+// ----------------- VERIFY OTP -----------------
 export const verifyOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
 
@@ -50,33 +49,18 @@ export const verifyOtp = asyncHandler(async (req, res) => {
     throw new Error("Email and OTP are required");
   }
 
-  // 👇 MUST select otp & otpExpiry
   const user = await User.findOne({ email }).select("+otp +otpExpiry");
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
-  if (user.isVerified) {
-    res.status(400);
-    throw new Error("User already verified");
-  }
+  if (user.isVerified) throw new Error("User already verified");
+  if (!user.otp || !user.otpExpiry) throw new Error("OTP not found. Please request again");
+  if (Date.now() > user.otpExpiry) throw new Error("OTP expired");
 
-  if (!user.otp || !user.otpExpiry) {
-    res.status(400);
-    throw new Error("OTP not found. Please request again.");
-  }
+  // Compare hashed OTP
+  const isValid = await bcrypt.compare(otp, user.otp);
+  if (!isValid) throw new Error("Incorrect OTP");
 
-  if (user.otp !== otp) {
-    res.status(400);
-    throw new Error("Incorrect OTP");
-  }
-
-  if (Date.now() > user.otpExpiry) {
-    res.status(400);
-    throw new Error("OTP expired");
-  }
-
+  // Mark verified and remove OTP
   user.isVerified = true;
   user.otp = undefined;
   user.otpExpiry = undefined;
@@ -91,32 +75,18 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   });
 });
 
-
+// ----------------- LOGIN -----------------
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) throw new Error("Email and password required");
 
-  if (!email || !password) {
-    res.status(400);
-    throw new Error("Email and password required");
-  }
-
-  // 👇 MUST select password
   const user = await User.findOne({ email }).select("+password");
-  if (!user) {
-    res.status(401);
-    throw new Error("Invalid email or password");
-  }
+  if (!user) throw new Error("Invalid email or password");
 
   const isMatch = await user.matchPassword(password);
-  if (!isMatch) {
-    res.status(401);
-    throw new Error("Invalid email or password");
-  }
+  if (!isMatch) throw new Error("Invalid email or password");
 
-  if (!user.isVerified) {
-    res.status(401);
-    throw new Error("Email not verified");
-  }
+  if (!user.isVerified) throw new Error("Email not verified");
 
   res.json({
     _id: user._id,
@@ -126,8 +96,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
-// GET CURRENT USER → Protected
+// ----------------- GET CURRENT USER -----------------
 export const getMe = asyncHandler(async (req, res) => {
   res.json({
     _id: req.user._id,
