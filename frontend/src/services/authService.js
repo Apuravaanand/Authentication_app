@@ -1,28 +1,29 @@
 // frontend/services/authService.js
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://fullstack-authentication-page.onrender.com" ;
-if (!API_URL) throw new Error("VITE_API_URL not defined");
+// Backend API URL (from .env or fallback)
+const API_URL = import.meta.env.VITE_API_URL || "https://fullstack-authentication-page.onrender.com";
 
+// Axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
+  withCredentials: true, // only needed if backend uses cookies
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach token
+// Attach token automatically to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Save auth data
+// Save auth data (token + user info) to localStorage
 const saveAuthData = (data) => {
   if (data?.token) localStorage.setItem("token", data.token);
-  if (data?._id) {
+  if (data?._id && data?.name && data?.email) {
     localStorage.setItem(
       "user",
       JSON.stringify({ _id: data._id, name: data.name, email: data.email })
@@ -30,6 +31,7 @@ const saveAuthData = (data) => {
   }
 };
 
+// Auth service functions
 export const registerUser = async (form) => {
   const { data } = await api.post("/api/auth/register", form);
   return data;

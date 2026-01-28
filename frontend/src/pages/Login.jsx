@@ -9,12 +9,16 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
   const { setToken, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Update form fields
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -22,12 +26,16 @@ export default function Login() {
 
     try {
       const data = await loginUser(form);
+
+      // Save auth context
       setToken(data.token);
       setUser({ _id: data._id, name: data.name, email: data.email });
+
+      // Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
-      // show real backend error if exists
-      const errorMsg = err.response?.data?.message || "Something went wrong";
+      const errorMsg =
+        err.response?.data?.message || err.message || "Something went wrong!";
       setMessage(errorMsg);
       console.error("Login Error:", err.response || err);
     } finally {
@@ -50,6 +58,7 @@ export default function Login() {
         onChange={handleChange}
         placeholder="Enter your email"
         required
+        disabled={loading}
       />
 
       <InputField
@@ -60,22 +69,24 @@ export default function Login() {
         onChange={handleChange}
         placeholder="Enter your password"
         required
+        disabled={loading}
       />
 
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Logging in..." : "Login"}
       </Button>
 
-      {message && <p className="text-red-500 text-center mt-2">{message}</p>}
+      {message && (
+        <p className="text-center mt-2 text-red-500 font-medium">{message}</p>
+      )}
 
-
-      {/* Optional: Register Link */}
-      <p className="text-center mt-2 text-sm">
+      <p className="text-center mt-4 text-sm">
         Don't have an account?{" "}
         <button
           type="button"
           className="text-blue-600 hover:underline"
           onClick={() => navigate("/")}
+          disabled={loading}
         >
           Register
         </button>

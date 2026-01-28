@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
@@ -9,29 +9,39 @@ export default function VerifyOTP() {
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { setToken, setUser } = useContext(AuthContext);
 
-  const email = location.state?.email || "";
+  // Get email passed from Register page
+  const email = location.state?.email;
+
+  // Redirect if email is missing
+  useEffect(() => {
+    if (!email) navigate("/"); // fallback to register
+  }, [email, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!otp) {
+    if (!otp.trim()) {
       setMessage("Please enter the OTP");
       return;
     }
 
     setMessage("");
     setLoading(true);
+
     try {
-      const data = await verifyOtp({ email, otp });
+      const data = await verifyOtp({ email, otp: otp.trim() });
       setToken(data.token);
       setUser({ _id: data._id, name: data.name, email: data.email });
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      setMessage(err.response?.data?.message || "Something went wrong. Try again.");
+      const errorMsg =
+        err.response?.data?.message || err.message || "Something went wrong!";
+      setMessage(errorMsg);
+      console.error("OTP Verification Error:", err.response || err);
     } finally {
       setLoading(false);
     }
@@ -51,13 +61,16 @@ export default function VerifyOTP() {
         onChange={(e) => setOtp(e.target.value)}
         placeholder="Enter OTP"
         required
+        disabled={loading}
       />
 
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Verifying..." : "Verify"}
       </Button>
 
-      {message && <p className="text-red-500 text-center mt-2">{message}</p>}
+      {message && (
+        <p className="text-center mt-2 text-red-500 font-medium">{message}</p>
+      )}
     </form>
   );
 }

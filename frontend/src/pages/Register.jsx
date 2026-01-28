@@ -9,12 +9,15 @@ export default function Register() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
+  // Update form fields
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -23,19 +26,21 @@ export default function Register() {
 
     try {
       const res = await registerUser(form);
+
+      // Show success message
       setMessage(res.message || "OTP sent to your email");
+
+      // Navigate to OTP verification page
       navigate("/verify-otp", { state: { email: form.email } });
     } catch (err) {
       const errorMsg =
-        err.response?.data?.message || err.message || "Something went wrong. Try again.";
+        err.response?.data?.message || err.message || "Something went wrong!";
       setMessage(errorMsg);
       setIsError(true);
 
+      // Redirect to login if user already exists
       if (errorMsg.toLowerCase().includes("already exists")) {
-        setTimeout(() => {
-          setMessage("");
-          navigate("/login");
-        }, 2000);
+        setTimeout(() => navigate("/login"), 2500);
       }
 
       console.error(err);
@@ -94,7 +99,7 @@ export default function Register() {
           onClick={() => navigate("/login")}
           disabled={loading}
         >
-          Already Member?
+          Already Member? Login
         </button>
       </p>
 
