@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // MUST be first
+dotenv.config(); 
 
 dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
 
