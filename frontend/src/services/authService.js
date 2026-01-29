@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  "https://fullstack-authentication-page.onrender.com";
+  "https://authentication-app-lap3.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
