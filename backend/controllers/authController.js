@@ -1,4 +1,3 @@
-// controllers/authController.js
 import User from "../models/User.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
@@ -9,34 +8,45 @@ import generateToken from "../utils/generateToken.js";
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    res.status(400);
+    throw new Error("All fields are required");
+  }
+
   const userExists = await User.findOne({ email });
   if (userExists) {
     res.status(400);
     throw new Error("User already exists");
   }
 
-  // Hash password handled in model pre-save
-  const user = await User.create({ name, email, password, isVerified: false });
+  // Create user (password hashed in model)
+  const user = await User.create({
+    name,
+    email,
+    password,
+    isVerified: false,
+  });
 
-  // Generate OTP and hash it
+  // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashedOtp = await bcrypt.hash(otp, 10);
-  user.otp = hashedOtp;
-  user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+  user.otp = await bcrypt.hash(otp, 10);
+  user.otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
   await user.save();
 
-  // Send OTP via email
-  await sendEmail(
-    email,
-    "Your OTP for Auth App",
-    `Hello ${name}, your OTP is ${otp}. It expires in 10 minutes.`
-  );
+  // Send OTP (do NOT break registration if email fails)
+  try {
+    await sendEmail(
+      email,
+      "Verify your email",
+      otp
+    );
+  } catch (error) {
+    console.error("OTP email failed:", error.message);
+  }
 
   res.status(201).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    message: "OTP sent to email, please verify",
+    success: true,
+    message: "Registration successful. Please verify OTP sent to email",
   });
 });
 
@@ -50,23 +60,31 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findOne({ email }).select("+otp +otpExpiry");
-  if (!user) throw new Error("User not found");
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
-  if (user.isVerified) throw new Error("User already verified");
-  if (!user.otp || !user.otpExpiry) throw new Error("OTP not found. Please request again");
-  if (Date.now() > user.otpExpiry) throw new Error("OTP expired");
+  if (user.isVerified) {
+    throw new Error("Email already verified");
+  }
 
-  // Compare hashed OTP
-  const isValid = await bcrypt.compare(otp, user.otp);
-  if (!isValid) throw new Error("Incorrect OTP");
+  if (!user.otp || Date.now() > user.otpExpiry) {
+    throw new Error("OTP expired. Please request a new one");
+  }
 
-  // Mark verified and remove OTP
+  const isValidOtp = await bcrypt.compare(otp, user.otp);
+  if (!isValidOtp) {
+    throw new Error("Invalid OTP");
+  }
+
   user.isVerified = true;
   user.otp = undefined;
   user.otpExpiry = undefined;
   await user.save();
 
   res.json({
+    success: true,
     _id: user._id,
     name: user.name,
     email: user.email,
@@ -78,17 +96,22 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 // ----------------- LOGIN -----------------
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) throw new Error("Email and password required");
+
+  if (!email || !password) {
+    throw new Error("Email and password are required");
+  }
 
   const user = await User.findOne({ email }).select("+password");
-  if (!user) throw new Error("Invalid email or password");
+  if (!user || !(await user.matchPassword(password))) {
+    throw new Error("Invalid email or password");
+  }
 
-  const isMatch = await user.matchPassword(password);
-  if (!isMatch) throw new Error("Invalid email or password");
-
-  if (!user.isVerified) throw new Error("Email not verified");
+  if (!user.isVerified) {
+    throw new Error("Please verify your email before login");
+  }
 
   res.json({
+    success: true,
     _id: user._id,
     name: user.name,
     email: user.email,

@@ -1,26 +1,23 @@
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-import path from "path";
+import Brevo from "@getbrevo/brevo";
 
-dotenv.config({
-  path: path.resolve(process.cwd(), ".env"),
-});
+const apiInstance = new Brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: Number(process.env.EMAIL_PORT) === 465,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-export const sendEmail = async (to, subject, text) => {
-  return await transporter.sendMail({
-    from: `"Auth App" <${process.env.EMAIL_USER}>`,
-    to,
+export const sendEmail = async (to, subject, otp) => {
+  const email = {
+    sender: { email: process.env.EMAIL_FROM, name: "Auth App" },
+    to: [{ email: to }],
     subject,
-    text,
-  });
+    htmlContent: `
+      <h3>Email Verification</h3>
+      <p>Your OTP is:</p>
+      <h2>${otp}</h2>
+      <p>Valid for 5 minutes.</p>
+    `,
+  };
+
+  return await apiInstance.sendTransacEmail(email);
 };
