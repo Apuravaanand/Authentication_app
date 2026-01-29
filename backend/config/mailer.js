@@ -1,23 +1,18 @@
-import Brevo from "@getbrevo/brevo";
+// backend/config/mailer.js
+import { Resend } from "resend";
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(
-  Brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY
-);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async (to, subject, otp) => {
-  const email = {
-    sender: { email: process.env.EMAIL_FROM, name: "Auth App" },
-    to: [{ email: to }],
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM,
+    to,
     subject,
-    htmlContent: `
-      <h3>Email Verification</h3>
-      <p>Your OTP is:</p>
-      <h2>${otp}</h2>
-      <p>Valid for 5 minutes.</p>
+    html: `
+      <h2>Email Verification</h2>
+      <p>Your OTP:</p>
+      <h1>${otp}</h1>
+      <p>Valid for 10 minutes.</p>
     `,
-  };
-
-  return await apiInstance.sendTransacEmail(email);
+  });
 };
