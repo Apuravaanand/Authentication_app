@@ -1,13 +1,14 @@
-// server.js
+import path from "path";
 import dotenv from "dotenv";
-dotenv.config();
+
+dotenv.config({ path: path.join(process.cwd(), ".env") });
+
 
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
-import path from "path";
 import { fileURLToPath } from "url";
 
 import connectDB from "./config/db.js";

@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
-import { sendEmail } from "../config/mailer.js";
+import sendEmail from "../config/mailer.js";
 import generateToken from "../utils/generateToken.js";
 
 /* ----------------- REGISTER ----------------- */
