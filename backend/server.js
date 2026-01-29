@@ -3,6 +3,9 @@ dotenv.config(); // MUST be first
 
 dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
 
+console.log("RESEND_API_KEY in production:", process.env.RESEND_API_KEY ? "Loaded ✅" : "Missing ❌");
+
+
 import path from "path";
 import express from "express";
 import cors from "cors";

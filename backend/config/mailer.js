@@ -17,7 +17,7 @@ export const sendOtpEmail = async (toEmail, otp, type = "verify") => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "no-reply@yourdomain.com", // use your verified sender
+        from: "onboarding@resend.dev", // use your verified sender
         to: toEmail,
         subject,
         html,
