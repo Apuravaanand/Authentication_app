@@ -15,7 +15,11 @@ export const registerUser = asyncHandler(async (req, res) => {
   const otp = await user.generateOtp("verify");
   await user.save();
 
-  await sendEmail(email, otp, "verify");
+  try {
+    await sendEmail(email, otp, "verify");
+  } catch (err) {
+    console.error("OTP email failed:", err);
+  }
 
   res.status(201).json({ success: true, message: "Registration successful. OTP sent to your email" });
 });
