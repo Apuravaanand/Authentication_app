@@ -35,7 +35,7 @@ app.use(express.json());
 // CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "https://authentication-app-kj80.onrender.com", // frontend dev server
+    origin: process.env.CLIENT_URL || "https://authentication-app-ac65.onrender.com", // frontend dev server
     credentials: true,
   })
 );
