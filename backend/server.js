@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
-dotenv.config(); 
+import path from "path"; // <--- must import path
 
-dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
-import path from "path";
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
