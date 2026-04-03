@@ -8,11 +8,11 @@ export const sendOtpEmail = async (toEmail, otp, type = "verify") => {
   const fromEmail = process.env.EMAIL_FROM;
 
   if (!apiKey) {
-    console.error("❌ BREVO_API_KEY missing");
+    console.error("BREVO_API_KEY missing");
     return;
   }
   if (!fromEmail) {
-    console.error("❌ EMAIL_FROM missing or not verified in Brevo");
+    console.error("EMAIL_FROM missing or not verified in Brevo");
     return;
   }
 
@@ -34,9 +34,9 @@ export const sendOtpEmail = async (toEmail, otp, type = "verify") => {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error("❌ Email send failed:", data);
+      console.error("Email send failed:", data);
     } else {
-      console.log("✅ OTP email sent to", toEmail);
+      console.log("OTP email sent to", toEmail);
     }
   } catch (err) {
     console.error("❌ Email error:", err.message);
