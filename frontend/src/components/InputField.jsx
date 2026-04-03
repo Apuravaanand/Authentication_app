@@ -15,8 +15,8 @@ export default function InputField({
       <input
         type={type}
         name={name}
-        value={value}            // ✅ controlled input
-        onChange={onChange}      // ✅ controlled input
+        value={value}          
+        onChange={onChange}    
         placeholder={placeholder}
         required={required}
         className="border p-2 rounded focus:outline-none focus:ring focus:border-blue-500"
