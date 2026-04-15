@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
     if (storedToken) setToken(storedToken);
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
-
   useEffect(() => {
     if (token) localStorage.setItem("token", token);
     else localStorage.removeItem("token");
@@ -20,12 +19,10 @@ export const AuthProvider = ({ children }) => {
     if (user) localStorage.setItem("user", JSON.stringify(user));
     else localStorage.removeItem("user");
   }, [token, user]);
-
   const logout = () => {
     setToken("");
     setUser(null);
   };
-
   return (
     <AuthContext.Provider value={{ token, setToken, user, setUser, logout }}>
       {children}
